@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoTask - Gerenciador de Tarefas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f8; padding: 40px 20px; display: flex; justify-content: center; }
+    .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
+    h1 { color: #2d3748; font-size: 24px; margin-bottom: 20px; text-align: center; }
+    .form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    input { flex: 1; padding: 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }
+    button { background: #2b6cb0; color: white; border: none; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    button:hover { background: #2c5282; }
+    ul { list-style: none; }
+    li { background: #f7fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .title { cursor: pointer; }
+    .completed { text-decoration: line-through; color: #a0aec0; }
+    .actions { display: flex; gap: 8px; }
+    .btn-del { background: #e53e3e; padding: 6px 10px; font-size: 12px; }
+    .btn-del:hover { background: #c53030; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🌱 EcoTask</h1>
+  
+  <div class="form-group">
+    <input type="text" id="taskInput" placeholder="Nova tarefa...">
+    <button onclick="addTask()">Adicionar</button>
+  </div>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+  const API_URL = '/api/tasks';
+
+  async function loadTasks() {
+    const res = await fetch(API_URL);
+    const tasks = await res.json();
+    const list = document.getElementById('taskList');
+    list.innerHTML = '';
+
+    tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="title ${task.status === 'Concluído' ? 'completed' : ''}" onclick="toggleTask(${task.id})">
+          ${task.title}
+        </span>
+        <div class="actions">
+          <button class="btn-del" onclick="deleteTask(${task.id})">Excluir</button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  async function addTask() {
+    const input = document.getElementById('taskInput');
+    if (!input.value.trim()) return;
+
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: input.value })
+    });
+
+    input.value = '';
+    loadTasks();
+  }
+
+  async function toggleTask(id) {
+    await fetch(`${API_URL}/${id}`, { method: 'PATCH' });
+    loadTasks();
+  }
+
+  async function deleteTask(id) {
+    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    loadTasks();
+  }
+
+  loadTasks();
+</script>
+
+</body>
+</html>
